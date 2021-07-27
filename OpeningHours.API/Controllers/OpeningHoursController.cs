@@ -19,21 +19,39 @@ namespace OpeningHours.API.Controllers
         }
 
         /// <summary>
-        /// Verifies OTP sent to customer during password reset
+        /// Gets formatted restaurant opening weekly hours
         /// </summary>
-        /// <param name="commad">VerifyResetPasswordOtpCommand containing customerId and Otp</param>
-        /// <returns>Unique id of the customer that performs the verification</returns>
-        [HttpPost]
+        /// <param name="file">An IFormFile file in json format containg the data</param>
+        /// <returns>Line separated string containg the formatted data</returns>
+        [HttpPost("from-file")]
         [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> VerifyResetPasswordOtp(IFormFile file)
         {
-            var query = new GetFormattedOpeningHoursQuery { File = file };
+            var query = new GetFormattedOpeningHoursFromFileQuery { File = file };
             if (!ModelState.IsValid)
                 return BadRequest(ModelState.ValidationState);
 
             var result = await _mediatr.Send(query);
+            return result.Status ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// Gets formatted restaurant opening weekly hours
+        /// </summary>
+        /// <param name="request">JSON formatted body payload</param>
+        /// <returns>Line separated string containg the formatted data</returns>
+        [HttpPost]
+        [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        public async Task<IActionResult> VerifyResetPasswordOtp([FromBody] GetFormattedOpeningHoursQuery request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState.ValidationState);
+
+            var result = await _mediatr.Send(request);
             return result.Status ? Ok(result) : BadRequest(result);
         }
     }

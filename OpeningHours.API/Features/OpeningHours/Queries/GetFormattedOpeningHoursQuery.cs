@@ -4,26 +4,24 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
 using MediatR;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using OpeningHours.API.Behaviours;
 using OpeningHours.API.Models;
 using OpeningHours.API.Services;
 
 namespace OpeningHours.API.Features.OpeningHours.Queries
 {
 
-    public class GetFormattedOpeningHoursQuery : IRequest<BaseResponse<string>>
+    public class GetFormattedOpeningHoursQuery : HourRanges, IRequest<BaseResponse<string>>
     {
-        public IFormFile File { get; set; }
+        
     }
 
     public class GetFormattedOpeningHoursQueryValidator : AbstractValidator<GetFormattedOpeningHoursQuery>
     {
         public GetFormattedOpeningHoursQueryValidator()
         {
-            RuleFor(x => x.File).SetValidator(new JsonFileValidator());
+            RuleFor(x => x).NotNull();
         }
     }
 
@@ -41,20 +39,16 @@ namespace OpeningHours.API.Features.OpeningHours.Queries
             _openingHoursFormatter = openingHoursFormatter;
         }
 
-        public async Task<BaseResponse<string>> Handle(GetFormattedOpeningHoursQuery request, CancellationToken cancellationToken)
+        public Task<BaseResponse<string>> Handle(GetFormattedOpeningHoursQuery request, CancellationToken cancellationToken)
         {
-            string jsonContent;
-            using (var stream = request.File.OpenReadStream())
-            using (var reader = new StreamReader(stream))
-            {
-                jsonContent = await reader.ReadToEndAsync();
-            }
+            var jsonData = JsonConvert.SerializeObject(request);
 
-            var openingHours = JsonConvert.DeserializeObject<Dictionary<string, IList<Entry>>>(jsonContent);
+            var openingHours = JsonConvert.DeserializeObject<Dictionary<string, IList<Entry>>>(jsonData);
 
             var formattedOpeningHours = _openingHoursFormatter.GetOpeningHoursHumanReadableFormat(openingHours);
 
-            return new BaseResponse<string>(true, "Operation Successful", formattedOpeningHours);
+            _logger.LogInformation("Data formatted successfully");
+            return Task.FromResult(new BaseResponse<string>(true, "Operation Successful", formattedOpeningHours));
         }
     }
 }
