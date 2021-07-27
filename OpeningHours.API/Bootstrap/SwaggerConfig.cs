@@ -25,7 +25,7 @@ namespace OpeningHours.API.Bootstrap
                 c.AddServer(new OpenApiServer
                 {
                     Url = "",
-                    Description = "Development",
+                    Description = "Stagging",
                 });
                 c.AddServer(new OpenApiServer
                 {

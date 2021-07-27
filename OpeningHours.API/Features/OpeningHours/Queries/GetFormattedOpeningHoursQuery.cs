@@ -1,10 +1,15 @@
-﻿using System.Threading;
+﻿using System.Collections.Generic;
+using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using OpeningHours.API.Behaviours;
 using OpeningHours.API.Models;
+using OpeningHours.API.Services;
 
 namespace OpeningHours.API.Features.OpeningHours.Queries
 {
@@ -18,24 +23,38 @@ namespace OpeningHours.API.Features.OpeningHours.Queries
     {
         public GetFormattedOpeningHoursQueryValidator()
         {
-            RuleFor(x => x.File).Must(x => x.GetType() == typeof(IFormFile)).WithMessage("Missing or invalid required parameter File");
+            RuleFor(x => x.File).SetValidator(new JsonFileValidator());
         }
     }
 
     public class GetFormattedOpeningHoursQueryHandler : IRequestHandler<GetFormattedOpeningHoursQuery, BaseResponse<string>>
     {
         private readonly ILogger<GetFormattedOpeningHoursQueryHandler> _logger;
+        private readonly IOpeningHoursFormatter _openingHoursFormatter;
 
         public GetFormattedOpeningHoursQueryHandler(
-            ILogger<GetFormattedOpeningHoursQueryHandler> logger
+            ILogger<GetFormattedOpeningHoursQueryHandler> logger,
+            IOpeningHoursFormatter openingHoursFormatter
             )
         {
             _logger = logger;
+            _openingHoursFormatter = openingHoursFormatter;
         }
 
-        public Task<BaseResponse<string>> Handle(GetFormattedOpeningHoursQuery request, CancellationToken cancellationToken)
+        public async Task<BaseResponse<string>> Handle(GetFormattedOpeningHoursQuery request, CancellationToken cancellationToken)
         {
-            return Task.FromResult(new BaseResponse<string>(true, "Operation Successful", "Abdullahi"));
+            string jsonContent;
+            using (var stream = request.File.OpenReadStream())
+            using (var reader = new StreamReader(stream))
+            {
+                jsonContent = await reader.ReadToEndAsync();
+            }
+
+            var openingHours = JsonConvert.DeserializeObject<Dictionary<string, IList<Entry>>>(jsonContent);
+
+            var formattedOpeningHours = _openingHoursFormatter.GetOpeningHoursHumanReadableFormat(openingHours);
+
+            return new BaseResponse<string>(true, "Operation Successful", formattedOpeningHours);
         }
     }
 }

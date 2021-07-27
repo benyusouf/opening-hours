@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json.Converters;
 using OpeningHours.API.Bootstrap;
+using OpeningHours.API.Services;
 
 namespace OpeningHours.API
 {
@@ -26,6 +27,7 @@ namespace OpeningHours.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddScoped<IOpeningHoursFormatter, OpeningHoursFormatter>();
 
             services
                 .AddControllers(option =>

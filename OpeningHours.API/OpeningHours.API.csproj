@@ -35,5 +35,6 @@
     <Folder Include="Features\OpeningHours\" />
     <Folder Include="Features\OpeningHours\Commands\" />
     <Folder Include="Features\OpeningHours\Queries\" />
+    <Folder Include="Services\" />
   </ItemGroup>
 </Project>
